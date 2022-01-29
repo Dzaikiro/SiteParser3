@@ -26,6 +26,10 @@ namespace SiteParser
             {
                 try
                 {
+                    if(!urls[i].ToString().Contains(urls[0]))
+                    {
+                        continue;
+                    }
 
                     WebRequest request = WebRequest.Create(urls[i]);//отправляемс запрос на ссылку 
                     WebResponse response = request.GetResponse();//получаем ответ 
@@ -37,18 +41,22 @@ namespace SiteParser
                     }
                     var parser = new HtmlParser();
                     var document = parser.ParseDocument(html);
-                    var links = document.QuerySelectorAll("a");
+                    var links = document.QuerySelectorAll("a, img, link, script");
                     //возвращаем строки с атрибутом <а>
 
                     foreach (var link in links)
                     {
 
                         var url = link.GetAttribute("href");//получаем ссылки с атрибутом <href>
-                        if (string.IsNullOrEmpty(url))
-                        { 
-                            continue;//пропускаем пустые ссылки 
+                        if (string.IsNullOrEmpty(url) && !url.Contains("mailto") && !url.Contains("ssh") && !url.Contains("tel"))
+                        {
+                            url = link.GetAttribute("src");
+                            if(string.IsNullOrEmpty(url))
+                            {
+                                continue;//пропускаем пустые ссылки 
+                            }
                         }
-
+                        
                         if (url.StartsWith('/'))
                         {
                             url = $"{urls[0].TrimEnd('/')}{url}";
@@ -59,7 +67,7 @@ namespace SiteParser
                             
                         }
                         // добавляем проверку на: пустые ссылки, содержание юзер домена, наличие в списке
-                        if (uri != null && uri.ToString().Contains(urls[0]) && !urls.Contains(uri.ToString()) && !urlsfile.Contains(uri.ToString()))
+                        if (uri != null  && !urls.Contains(uri.ToString()) && !urlsfile.Contains(uri.ToString()))
                             urls.Add(uri.ToString());
                     }
                 }
